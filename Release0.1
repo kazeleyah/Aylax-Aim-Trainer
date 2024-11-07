@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Aylax's Aim Trainer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <style>
+    :root {
+      --target-color: #ff66b2;
+      --number-color: #ffffff;
+      --playarea-background-color: #ffffff;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      user-select: none;
+      cursor: crosshair;
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4, #ff9a9e);
+      background-size: 300% 300%;
+      animation: gradientAnimation 15s ease infinite;
+      touch-action: manipulation;
+    }
+
+    @keyframes gradientAnimation {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    #startScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      color: #333333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      font-size: 24px;
+      background-color: rgba(255, 255, 255, 0.9);
+      z-index: 1000;
+      text-align: center;
+    }
+
+    #startScreen h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    #startScreen ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0 auto;
+      max-width: 600px;
+    }
+
+    #startScreen li {
+      margin-bottom: 10px;
+    }
+
+    #startScreen button {
+      margin-top: 30px;
+      padding: 15px 30px;
+      background-color: #ff66b2;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    #startScreen button:hover {
+      background-color: #ff85c9;
+    }
+
+    #settingsButton {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #ff66b2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+      z-index: 500;
+      display: none; /* Hidden on start and end screens */
+    }
+
+    #settingsButton:hover {
+      background-color: #ff85c9;
+    }
+
+    #settingsPanel {
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      width: 280px;
+      padding: 20px;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      border-radius: 8px;
+      display: none;
+      z-index: 1001;
+    }
+
+    .setting {
+      margin-top: 10px;
+    }
+
+    .setting label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    #gameContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: center;
+    }
+
+    #gameArea {
+      position: relative;
+      width: 800px;
+      height: 800px;
+      border: 2px solid black;
+      background-color: var(--playarea-background-color);
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .target {
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 130px;
+      font-weight: bold;
+      font-size: 65px;
+      color: var(--number-color);
+      cursor: crosshair;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      transition: transform 0.1s ease, opacity 0.2s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: var(--target-color);
+    }
+
+    .target:hover {
+      transform: scale(1.1);
+    }
+
+    .kill-animation {
+      animation: explode 0.2s forwards;
+    }
+
+    @keyframes explode {
+      to {
+        transform: scale(1.5);
+        opacity: 0;
+      }
+    }
+
+    @keyframes redGlow {
+      0% { box-shadow: inset 0 0 0px rgba(255, 0, 0, 0); }
+      50% { box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.5); }
+      100% { box-shadow: inset 0 0 0px rgba(255, 0, 0, 0); }
+    }
+
+    .red-glow {
+      animation: redGlow 0.5s ease-in-out;
+    }
+
+    #timer {
+      font-size: 30px;
+      color: #333333;
+      margin-top: 10px;
+      text-shadow: 1px 1px 3px #ffffff;
+    }
+
+    #gameStats {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      font-size: 24px;
+      color: #333333;
+      margin-top: 10px;
+      text-shadow: 1px 1px 3px #ffffff;
+    }
+
+    #gameOverScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.95);
+      color: #333333;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    #gameOverScreen h1 {
+      margin-bottom: 20px;
+      font-size: 48px;
+    }
+
+    #gameOverScreen .personal-best {
+      color: gold;
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    #finalScore {
+      font-size: 48px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    #gameOverScreen p {
+      font-size: 24px;
+      margin: 5px 0;
+    }
+
+    #gameOverScreen button {
+      margin-top: 30px;
+      padding: 15px 30px;
+      background-color: #ff66b2;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    #gameOverScreen button:hover {
+      background-color: #ff85c9;
+    }
+
+    #lives {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .heart {
+      width: 30px;
+      height: 30px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 29.6"><path fill="%23ff66b2" d="M23.6,0C20.3,0,17.4,1.8,16,4.4C14.6,1.8,11.7,0,8.4,0C3.8,0,0,3.8,0,8.4c0,7.6,16,21.2,16,21.2 s16-13.6,16-21.2C32,3.8,28.2,0,23.6,0z"/></svg>') no-repeat center;
+      background-size: contain;
+      margin-left: 5px;
+    }
+
+    .half-heart {
+      width: 30px;
+      height: 30px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 29.6"><defs><clipPath id="halfHeart"><rect x="0" y="0" width="16" height="29.6"/></clipPath></defs><path fill="%23ff66b2" clip-path="url(%23halfHeart)" d="M23.6,0C20.3,0,17.4,1.8,16,4.4C14.6,1.8,11.7,0,8.4,0C3.8,0,0,3.8,0,8.4c0,7.6,16,21.2,16,21.2 s16-13.6,16-21.2C32,3.8,28.2,0,23.6,0z"/></svg>') no-repeat center;
+      background-size: contain;
+      margin-left: 5px;
+    }
+
+    #gameArea.red-glow {
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    }
+
+    #personalBestMessage {
+      color: gold;
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Start Screen -->
+  <div id="startScreen">
+    <h1 id="title">Aylax's Aim Trainer</h1>
+    <div id="howToPlay">
+      <p><strong>How to Play:</strong></p>
+      <ul>
+        <li>Click on the targets numbered from <strong>1</strong> to <strong>50</strong> in ascending order.</li>
+        <li>Avoid clicking on empty spaces or wrong targets; this will reduce your lives.</li>
+        <li>The timer starts when you click the first correct target.</li>
+        <li>Complete the game as quickly as possible to achieve a higher score.</li>
+        <li>Your final score is based on speed and accuracy—try to beat your personal best!</li>
+      </ul>
+    </div>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <!-- Settings Button -->
+  <button id="settingsButton" onclick="toggleSettings()">Settings</button>
+
+  <!-- Settings Panel -->
+  <div id="settingsPanel">
+    <div class="setting">
+      <label for="targetColor">Target Color:</label>
+      <input type="color" id="targetColor" value="#ff66b2" onchange="changeTargetColor(this.value)">
+    </div>
+    <div class="setting">
+      <label for="numberColor">Number Color:</label>
+      <input type="color" id="numberColor" value="#ffffff" onchange="changeNumberColor(this.value)">
+    </div>
+    <div class="setting">
+      <label for="playAreaBackgroundColor">Play Area Background Color:</label>
+      <input type="color" id="playAreaBackgroundColor" value="#ffffff" onchange="changePlayAreaBackgroundColor(this.value)">
+    </div>
+    <div class="setting">
+      <label><input type="checkbox" id="killAnimationToggle" checked onchange="toggleKillAnimation(this.checked)"> Kill Animation</label>
+    </div>
+    <div class="setting">
+      <label for="volumeControl">Volume:</label>
+      <input type="range" id="volumeControl" min="0" max="0.2" step="0.01" value="0.05" onchange="setVolume(this.value)">
+      <button id="muteButton" onclick="toggleMute()">Mute</button>
+    </div>
+  </div>
+
+  <!-- Game Container -->
+  <div id="gameContainer">
+    <div id="timer">Time: 0.00s</div>
+    <div id="gameStats">
+      <div id="misses">Misses: 0</div>
+      <div id="hits">Hits: 0</div>
+      <div id="wrongTargets">Wrong Targets: 0</div>
+    </div>
+    <div id="gameArea">
+      <div id="lives"></div>
+    </div>
+  </div>
+
+  <!-- Game Over Screen (Moved Outside of gameArea) -->
+  <div id="gameOverScreen">
+    <h1 id="endMessage"></h1>
+    <div id="finalScore"></div>
+    <!-- Personal Best Message moved to endMessage -->
+    <p>Total Time: <span id="finalTime"></span> seconds</p>
+    <p>Average Time per Kill: <span id="avgTimePerKill"></span> seconds</p>
+    <p>Accuracy: <span id="accuracy"></span>%</p>
+    <p>Misses: <span id="missCount"></span></p>
+    <p>Wrong Targets Clicked: <span id="wrongTargetsEnd"></span></p>
+    <p>Personal Best Score: <span id="personalBestDisplay"></span></p>
+    <p>Personal Best Time: <span id="personalBestTime"></span> seconds</p>
+    <p>Personal Best Accuracy: <span id="personalBestAccuracy"></span>%</p>
+    <button onclick="startGame()">Retry</button>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // Game Variables
+    let nextTargetNumber = 1;
+    let score = 0;
+    let startTime = null;
+    let timerInterval = null;
+    let volume = 0.05;
+    let isMuted = false;
+    let lives = 5;
+    let missCount = 0;
+    let wrongTargetClicks = 0;
+    let hits = 0;
+    let totalClicks = 0;
+    let targets = [];
+    let gameActive = false;
+	let audioContext;
+	
+    // Personal Best Initialization
+    let storedPersonalBest = JSON.parse(localStorage.getItem('personalBest'));
+    let personalBest = storedPersonalBest || { score: 0, time: 0, accuracy: 0 };
+
+    // Ensure all values are numbers
+    personalBest.score = Number(personalBest.score) || 0;
+    personalBest.time = Number(personalBest.time) || 0;
+    personalBest.accuracy = Number(personalBest.accuracy) || 0;
+
+    // DOM Elements
+    const gameArea = document.getElementById("gameArea");
+    const startScreen = document.getElementById("startScreen");
+    const timerElement = document.getElementById("timer");
+    const missesElement = document.getElementById("misses");
+    const hitsElement = document.getElementById("hits");
+    const wrongTargetsElement = document.getElementById("wrongTargets");
+    const finalTimeElement = document.getElementById("finalTime");
+    const avgTimePerKillElement = document.getElementById("avgTimePerKill");
+    const gameOverScreen = document.getElementById("gameOverScreen");
+    const muteButton = document.getElementById("muteButton");
+    const livesElement = document.getElementById("lives");
+    const killAnimationToggle = document.getElementById("killAnimationToggle");
+    const missCountElement = document.getElementById("missCount");
+    const wrongTargetsEndElement = document.getElementById("wrongTargetsEnd");
+    const finalScoreElement = document.getElementById("finalScore");
+    const endMessageElement = document.getElementById("endMessage");
+    const personalBestDisplay = document.getElementById("personalBestDisplay");
+    const personalBestTime = document.getElementById("personalBestTime");
+    const personalBestAccuracy = document.getElementById("personalBestAccuracy");
+    const accuracyElement = document.getElementById("accuracy");
+    const settingsButton = document.getElementById("settingsButton");
+
+    // Toggle Settings Panel
+    function toggleSettings() {
+      const settingsPanel = document.getElementById("settingsPanel");
+      settingsPanel.style.display = settingsPanel.style.display === "none" ? "block" : "none";
+    }
+
+    // Change Target Color
+    function changeTargetColor(color) {
+      document.documentElement.style.setProperty("--target-color", color);
+      document.querySelectorAll('.target').forEach(target => target.style.backgroundColor = color);
+    }
+
+    // Change Number Color
+    function changeNumberColor(color) {
+      document.documentElement.style.setProperty("--number-color", color);
+      document.querySelectorAll('.target').forEach(target => target.style.color = color);
+    }
+
+    // Change Play Area Background Color
+    function changePlayAreaBackgroundColor(color) {
+      document.documentElement.style.setProperty("--playarea-background-color", color);
+      gameArea.style.backgroundColor = color;
+    }
+
+    // Toggle Kill Animation (Placeholder Function)
+    function toggleKillAnimation(isEnabled) {
+      // Implement animation toggle logic if needed
+    }
+
+    // Set Volume
+    function setVolume(val) {
+      volume = parseFloat(val);
+      if (isMuted && volume > 0) {
+        isMuted = false;
+        muteButton.textContent = 'Mute';
+      }
+    }
+
+    // Toggle Mute
+    function toggleMute() {
+      isMuted = !isMuted;
+      muteButton.textContent = isMuted ? 'Unmute' : 'Mute';
+    }
+
+    // Play Sound Function
+    function playSound(frequency, type, duration, gain = volume) {
+      if (isMuted || gain === 0) return;
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(gain, audioContext.currentTime);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + duration);
+    }
+
+    // Specific Sound Functions
+    function playClickSound() { playSound(400, 'sine', 0.05); }
+    function playMissSound() { playSound(200, 'sawtooth', 0.1); }
+    function playGameOverSound() { playSound(100, 'triangle', 0.3); }
+    function playPersonalBestSound() { playSound(600, 'square', 0.3, volume * 0.3); }
+
+	// Start Game Function
+	function startGame() {
+	// Initialize audioContext if it doesn’t already exist to meet user gesture requirements
+	if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+	}
+
+	// Reset Variables
+	score = 0;
+	nextTargetNumber = 1;
+	startTime = null;
+	isMuted = false;
+	muteButton.textContent = 'Mute';
+	lives = 5;
+	missCount = 0;
+	wrongTargetClicks = 0;
+	hits = 0;
+	totalClicks = 0;
+	targets = [];
+	gameActive = true;
+
+      // Display and Hide Screens
+      gameArea.style.display = "block";
+      startScreen.style.display = "none";
+      gameOverScreen.style.display = "none";
+      timerElement.textContent = "Time: 0.00s";
+      settingsButton.style.display = "block";
+
+      // Hide settings panel if open
+      document.getElementById("settingsPanel").style.display = "none";
+
+      // Remove existing targets
+      const existingTargets = gameArea.querySelectorAll('.target');
+      existingTargets.forEach(target => target.remove());
+
+      // Update Displays
+      updateLivesDisplay();
+      updateStatsDisplay();
+
+      // Create Initial Targets
+      createTargets();
+    }
+
+    // Create Targets Function
+    function createTargets() {
+      const targetNumbers = [];
+      for (let i = nextTargetNumber; i < nextTargetNumber + 3 && i <= 50; i++) {
+        targetNumbers.push(i);
+      }
+
+      targetNumbers.forEach(number => {
+        const target = createTarget(number);
+        gameArea.appendChild(target.element);
+        targets.push(target);
+      });
+    }
+
+    // Create Single Target
+    function createTarget(number) {
+      const targetSize = 130;
+      const target = document.createElement("div");
+      target.classList.add("target");
+      target.textContent = number;
+      target.dataset.number = number;
+
+      let position;
+      let attempts = 0;
+      const maxAttempts = 1000;
+      do {
+        position = {
+          left: 50 + Math.random() * (gameArea.clientWidth - targetSize - 100),
+          top: 50 + Math.random() * (gameArea.clientHeight - targetSize - 100)
+        };
+        attempts++;
+        if (attempts > maxAttempts) break;
+      } while (isOverlapping(position, targets, targetSize) || isOverlappingHearts(position, targetSize));
+
+      target.style.left = position.left + "px";
+      target.style.top = position.top + "px";
+
+      target.addEventListener("mousedown", (e) => {
+        e.stopPropagation();
+        onTargetClick(target);
+      });
+
+      target.style.backgroundColor = document.getElementById("targetColor").value;
+      target.style.color = document.getElementById("numberColor").value;
+      target.style.boxShadow = `0 0 10px rgba(0, 0, 0, 0.2)`;
+
+      return { element: target, position };
+    }
+
+    // Check if New Target Overlaps Existing Targets
+    function isOverlapping(newPos, existingTargets, targetSize) {
+      return existingTargets.some(({ position }) =>
+        Math.hypot(newPos.left - position.left, newPos.top - position.top) < targetSize + 5
+      );
+    }
+
+    // Check if New Target Overlaps Lives Display
+    function isOverlappingHearts(newPos, targetSize) {
+      const heartsRect = livesElement.getBoundingClientRect();
+      const gameAreaRect = gameArea.getBoundingClientRect();
+
+      const heartsPosition = {
+        left: heartsRect.left - gameAreaRect.left,
+        top: heartsRect.top - gameAreaRect.top,
+        width: heartsRect.width,
+        height: heartsRect.height
+      };
+
+      const targetRect = {
+        left: newPos.left,
+        top: newPos.top,
+        width: targetSize,
+        height: targetSize
+      };
+
+      return !(
+        targetRect.left + targetRect.width < heartsPosition.left ||
+        targetRect.left > heartsPosition.left + heartsPosition.width ||
+        targetRect.top + targetRect.height < heartsPosition.top ||
+        targetRect.top > heartsPosition.top + heartsPosition.height
+      );
+    }
+
+    // Handle Target Click
+    function onTargetClick(target) {
+      if (!gameActive) return;
+      totalClicks++;
+      const clickedNumber = parseInt(target.textContent);
+      if (clickedNumber === nextTargetNumber) {
+        playClickSound();
+
+        if (!startTime) {
+          startTime = performance.now();
+          timerInterval = setInterval(updateTimer, 10);
+        }
+
+        score += 100;
+        hits++;
+        nextTargetNumber++;
+
+        if (killAnimationToggle.checked) {
+          target.classList.add('kill-animation');
+          removeTarget(target);
+          spawnNewTarget();
+          setTimeout(() => { target.remove(); }, 200);
+        } else {
+          removeTarget(target);
+          target.remove();
+          spawnNewTarget();
+        }
+
+        updateStatsDisplay();
+
+        if (nextTargetNumber > 50) {
+          endGame(true);
+        }
+      } else {
+        playMissSound();
+        triggerHealthLossAnimation();
+        lives -= 1;
+        missCount++;
+        wrongTargetClicks++;
+        score -= 250;
+        updateLivesDisplay();
+        updateStatsDisplay();
+        if (lives <= 0) {
+          endGame(false);
+        }
+      }
+    }
+
+    // Remove Target from Array and DOM
+    function removeTarget(targetElement) {
+      const index = targets.findIndex(t => t.element === targetElement);
+      if (index > -1) {
+        targets.splice(index, 1);
+      }
+    }
+
+    // Spawn New Target
+    function spawnNewTarget() {
+      if (nextTargetNumber + 2 <= 50) {
+        const newTarget = createTarget(nextTargetNumber + 2);
+        gameArea.appendChild(newTarget.element);
+        targets.push(newTarget);
+      }
+    }
+
+    // Update Timer Display
+    function updateTimer() {
+      if (startTime) {
+        const currentTime = (performance.now() - startTime) / 1000;
+        timerElement.textContent = `Time: ${currentTime.toFixed(2)}s`;
+      }
+    }
+
+    // End Game Function
+    function endGame(completed) {
+      gameActive = false;
+      clearInterval(timerInterval);
+      timerInterval = null;
+
+      // Conditional Sound Playing
+      if (!completed) {
+        playGameOverSound();
+      }
+
+      // Remove existing targets
+      document.querySelectorAll('.target').forEach(target => target.remove());
+      targets = [];
+
+      // Hide Settings Button
+      settingsButton.style.display = "none";
+
+      // Calculate and Display Stats
+      const totalTime = startTime ? ((performance.now() - startTime) / 1000).toFixed(2) : "0.00";
+      finalTimeElement.textContent = totalTime;
+      missCountElement.textContent = missCount - wrongTargetClicks;
+      wrongTargetsEndElement.textContent = wrongTargetClicks;
+
+      // Calculate accuracy
+      const accuracy = totalClicks > 0 ? ((hits / totalClicks) * 100).toFixed(2) : "0.00";
+      accuracyElement.textContent = accuracy;
+
+      // Calculate average time per kill
+      const avgTime = hits > 0 ? (parseFloat(totalTime) / hits).toFixed(2) : "0.00";
+      avgTimePerKillElement.textContent = avgTime;
+
+      // Update final score
+      let timeMultiplier = 1;
+      if (completed) {
+        const timeTaken = parseFloat(totalTime);
+        if (timeTaken <= 1) {
+          timeMultiplier = 10;
+        } else if (timeTaken <= 30) {
+          timeMultiplier = 10 - ((timeTaken - 1) / 29) * 9;
+        } else {
+          timeMultiplier = 1;
+        }
+      }
+
+      let finalScore = score;
+      if (completed) {
+        finalScore *= timeMultiplier;
+      }
+      finalScore = Math.round(finalScore);
+
+      finalScoreElement.textContent = `Score: ${finalScore}`;
+
+      // Check for personal best
+      let isNewPersonalBest = false;
+
+      if (finalScore > personalBest.score) {
+        isNewPersonalBest = true;
+      } else if (finalScore === personalBest.score) {
+        if (parseFloat(totalTime) < personalBest.time) {
+          isNewPersonalBest = true;
+        } else if (parseFloat(totalTime) === personalBest.time) {
+          if (parseFloat(accuracy) > personalBest.accuracy) {
+            isNewPersonalBest = true;
+          }
+        }
+      }
+
+      if (isNewPersonalBest) {
+        personalBest.score = finalScore;
+        personalBest.time = parseFloat(totalTime);
+        personalBest.accuracy = parseFloat(accuracy);
+        localStorage.setItem('personalBest', JSON.stringify(personalBest));
+        playPersonalBestSound();
+        endMessageElement.textContent = `New Personal Best!`; // Display PB message here
+      } else {
+        endMessageElement.textContent = completed ? "Well Done!" : "Game Over";
+      }
+
+      // Handle undefined or null values with default
+      const personalBestTimeValue = personalBest.time ? personalBest.time.toFixed(2) : "0.00";
+      const personalBestAccuracyValue = personalBest.accuracy ? personalBest.accuracy.toFixed(2) : "0.00";
+
+      personalBestDisplay.textContent = personalBest.score;
+      personalBestTime.textContent = personalBestTimeValue;
+      personalBestAccuracy.textContent = personalBestAccuracyValue;
+
+      // Display the Game Over Screen
+      gameOverScreen.style.display = "flex";
+    }
+
+    // Update Lives Display
+    function updateLivesDisplay() {
+      livesElement.innerHTML = '';
+      let fullHearts = Math.floor(lives);
+      let halfHeart = lives % 1 !== 0;
+
+      for (let i = 0; i < fullHearts; i++) {
+        const heart = document.createElement('div');
+        heart.classList.add('heart');
+        livesElement.appendChild(heart);
+      }
+
+      if (halfHeart) {
+        const half = document.createElement('div');
+        half.classList.add('half-heart');
+        livesElement.appendChild(half);
+      }
+    }
+
+    // Update Game Stats Display
+    function updateStatsDisplay() {
+      hitsElement.textContent = `Hits: ${hits}`;
+      missesElement.textContent = `Misses: ${missCount - wrongTargetClicks}`;
+      wrongTargetsElement.textContent = `Wrong Targets: ${wrongTargetClicks}`;
+    }
+
+    // Trigger Health Loss Animation
+    function triggerHealthLossAnimation() {
+      gameArea.classList.add('red-glow');
+      gameArea.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.2)';
+      setTimeout(() => {
+        gameArea.classList.remove('red-glow');
+        gameArea.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.2)';
+      }, 500);
+    }
+
+    // Event Listener for Clicking on Empty Game Area
+    gameArea.addEventListener('mousedown', (e) => {
+      if (e.target === gameArea && startTime && gameActive) {
+        totalClicks++;
+        playMissSound();
+        triggerHealthLossAnimation();
+        lives -= 0.5;
+        missCount++;
+        score -= 150;
+        updateLivesDisplay();
+        updateStatsDisplay();
+        if (lives <= 0) {
+          endGame(false);
+        }
+      }
+    });
+
+    // Initialize Settings Button and Settings Panel Visibility
+    settingsButton.style.display = "none";
+    document.getElementById("settingsPanel").style.display = "none";
+
+    // Prevent Default Browser Zoom Shortcuts
+    window.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '0')) {
+        e.preventDefault();
+      }
+    });
+
+    window.addEventListener('wheel', function (e) {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  </script>
+</body>
+</html>
